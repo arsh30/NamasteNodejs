@@ -1,0 +1,142 @@
+VALIDATIONS ON THE DATABASE: 
+
+- To add validation means making some mandatory fields, (go to schema Types on the documentation and readout).
+
+const mongoose = require("mongoose");
+const validator = require("validator");
+const userSchema = new mongoose.Schema(
+  {
+    firstName: {
+      type: String,
+      required: true, // now we make this firstName is mandatory, if the client will not passed, then the entry will not be stored
+      minLength: 4,
+      maxLength: 50,
+    },
+    lastName: {
+      type: String,
+    },
+    emailId: {
+      type: String,
+      required: true,
+      unique: true, // isse duplicate emailId wali jo bhi entries hongi vo store nahi hongi
+      lowerCase: true, // bydefault db me ye lowercase me store hoga
+      trim: true,
+      validate(value) {
+        if (!validator.isEmail(value)) {
+          throw new Error("Email is not correct: " + value);
+        }
+      },
+    },
+    password: {
+      type: String,
+      required: true,
+      validate(value) {
+        if (!validator.isStrongPassword(value)) {
+          throw new Error("Your Password is not strong: " + value);
+        }
+      },
+    },
+    age: {
+      type: String,
+      min: 18,
+    },
+    gender: {
+      type: String,
+      // if we want to add custom validation,
+      // this validate function will run whenever we insert the new document,
+      // but when we update this existing user, then it will not run,
+      // so before putting value this method will run , and if the result is true then it only insert the Id into it.
+
+      // But if we want to update the existing user , and we want to run this validators functions,
+      // then we need to explicitly add runValidators in the api options (patch api )
+      validate(value) {
+        if (!["male", "female", "others"].includes(value)) {
+          throw new Error("Gender data is not valid");
+        }
+      },
+    },
+    photoUrl: {
+      type: String,
+      default:
+        "https://www.pnrao.com/wp-content/uploads/2023/06/dummy-user-male.jpg",
+      validate(value) {
+        if (!validator.isURL(value)) {
+          throw new Error("PhotoUrl is not correct: " + value);
+        }
+      },
+    },
+    about: {
+      type: String,
+      default: "This is the default about of the user",
+    },
+    skills: {
+      type: [String],
+    },
+  },
+  {
+    timestamps: true,
+    // so jbhi user create krege to ye add hojayegi, field createdAt, updatedAt
+    // so jb kisi user ko update krege toh uska date time change hojayega
+  }
+);
+
+// Now we create a mongooseModel
+const User = mongoose.model("User", userSchema);
+module.exports = User; // jisme store krre hai always should be in capital letter, we will create instance of this model
+
+--------------------
+
+API LEVEL VALIDATION (DATA SANITIZATION): Means when user want to update the document, on the API level, means suppose entry krte time 6 fields register kri hai 
+                    we dont want that user jo hai vo emailId ko update kr ske.
+
+
+app.patch("/user/:userId", async (req, res) => {
+  const userId = req.params?.userId;
+  const data = req.body;
+
+  try {
+    const allowedUpdates = [
+      "photoUrl",
+      "skills",
+      "about",
+      "gender",
+      "age",
+      "password",
+    ];
+
+    const isAllowedUpdates = Object.keys(data).every((k) =>
+      allowedUpdates.includes(k)
+    );
+    // every method basically return true if all conditions are true, else return false, it does not change the original array
+
+    if (!isAllowedUpdates) {
+      throw new Error("update not allowed");
+    }
+
+    const user = await User.findByIdAndUpdate({ _id: userId }, data, {
+      returnDocument: "after",
+      runValidators: true,
+    }); // jo jo field hmne schema me bnai hai and vo vo agr pass krre hai toh vo update hojayegi
+    console.log(user);
+    res.status(201).send("user updated successfully");
+  } catch (error) {
+    res.status(400).send("Something went wrong: " + error.message);
+  }
+});
+
+--------------------
+
+EMAIL ID VALIDATOR: Means emailId ko validate krne ke liye, we have to use package 
+
+- npm install validator
+-> 
+
+ validate(value) {
+        if (!validator.isEmail(value)) {
+          throw new Error("Email is not correct: " + value);
+        }
+      },
+
+NOTE: We have used DB level validations 
+
+------------------------------------ finish ------------------------------------

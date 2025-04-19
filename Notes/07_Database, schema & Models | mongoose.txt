@@ -1,0 +1,135 @@
+- To talk to database we, are using mongoose.[Note: mongoose documentation is very good.]
+- Currently we are using free account on mongodb atlas (connect to driver options we choose)
+- create clustor on mongodb official website and get the connection String 
+
+- create a folder "config" -> and create file ie "database.js"
+- npm install mongoose 
+
+
+Note: 
+1. Always first connect to database, and then listen to the SERVER 
+    because aisa na ho ki server pr hum request krte rhe but db hmara setup hi nahi hai
+
+
+Example current Code: 
+
+1. config/database.js ->
+const mongoose = require("mongoose");
+
+const connectDB = async () => {
+  await mongoose.connect(
+    "mongodb+srv://arshdeep:Arshdeep12345@cluster0.gpnfigx.mongodb.net/devTinder"
+  );
+  // This mongoose.connect will connect to the cluster that we have created
+  // devTinder is the database name we are creating using mongodb atlas (using driver methods)
+};
+
+module.exports = connectDB;
+
+------
+
+2. app.js ->
+
+const express = require("express");
+const connectDB = require("./config/database");
+const app = express();
+
+connectDB()
+  .then(() => {
+    // because mongoose.connect return a promise
+    console.log("connection is successfully established");
+    app.listen(3000, () => {
+      console.log("Server is successfully listening on port:3000");
+    });
+  })
+  .catch((error) => {
+    console.log("Connection not established");
+  });
+
+******************************************
+
+NOW CREATE OUR FIRST SCHEMA.  
+
+
+Eg: we talked about LLD, we will create user collection which is basically contains all the documents of users 
+    like firstName, lastName, etc. so to store data into the collections we have 
+    to create a "SCHEMA"
+
+- CREATE FOLDER IN SRC - "MODELS" , and create user.js 
+
+- Schema basically telling what information are you going to store in the db.
+
+const mongoose = require("mongoose");
+const userSchema = new mongoose.Schema({
+  firstName: {
+    type: String,
+  },
+  lastName: {
+    type: String,
+  },
+  emailId: {
+    type: String,
+  },
+  password: {
+    type: String,
+  },
+  age: {
+    type: String,
+  },
+  gender: {
+    type: String,
+  },
+});
+
+// Now we create a mongooseModel
+const User = mongoose.model("User", userSchema);
+module.exports = User; // jisme store krre hai always should be in capital letter, we will create instance of this model
+
+***************************************************************************
+
+NOW WE WILL CREATE THE API TO PUT THE DATA IN THE DATABASE. 
+
+const express = require("express");
+const connectDB = require("./config/database");
+const User = require("./models/user");
+const app = express();
+
+app.post("/signup", async (req, res) => {
+  try {
+    const newUser = {
+      firstName: "Arshdeep",
+      lastName: "Singh",
+      age: 25,
+      email: "abc@gmail.com",
+      password: "12345678",
+    };
+
+    const user = new User(newUser); // we create the instance of the user model, and we pass the data into it. 
+
+    // Now we have to save this user in the db,
+    // note: mostly mongoose methods return promise
+    await user.save();
+    res.status(200).send("user added successfully");
+  } catch (error) {
+    res.status(400).send("Error saving the user: " + error.message);
+  }
+});
+
+connectDB()
+  .then(() => {
+    console.log("connection is successfully established");
+    app.listen(3000, () => {
+      console.log("Server is successfully listening on port:3000");
+    });
+  })
+  .catch((error) => {
+    console.log("Connection not established");
+  });
+
+note: 
+2 field automatically added in mongodb that are: 
+1. _id 
+2. _V : version, jbhi kuch update krte hai to version change hota hai. 
+
+
+******************** finish **************************

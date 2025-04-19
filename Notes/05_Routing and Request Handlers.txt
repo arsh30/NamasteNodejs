@@ -1,0 +1,135 @@
+aLWAYS use POSTMAN -> to check the api for Testing the apis 
+
+In postman -> Create workspace
+            -> then inside this, we can make the collections ,
+            -> suppose user collection -> contains all user apis 
+            -> admin collection -> contains all admin apis
+
+
+HTTPS METHODS: 
+1. GET: To get the data
+2. POST : to save the data in DB
+3. PATCH: used to partially update a data (suppose 1 object hai usme se 1 field agr update krni hai toh)
+4. PUT: used to completely update the data (the entrie object)
+5. DELETE: used to delete the record from the DB
+
+---------------------------------
+
+Current Code:
+
+const express = require("express");
+
+const app = express();
+
+// If we write app.use("/users", (req,res )=>{ res.send({message:"hello world"})});
+// Then the output will always comes Hello world because /users match krega and iske aage agr kuch bhi likhdo tabhi yehi execute hojayega 
+
+
+app.use("/users", (req,res) => {
+  res.send({message: "Use middle ware called"})
+})
+app.get("/users", (req, res) => {
+  // CB function is known as request handlers
+  res.send({ firstName: "Arshdeep", age: 25 });
+});
+
+app.post("/users", (req, res) => {
+  // save data to DB
+  res.send({ message: "Data saved to DB successfully" });
+});
+
+app.delete("/users", (req, res) => {
+  res.send({ message: "Message delete successfully" });
+});
+
+// This will match all HTTPS methods API CALLS
+app.use("/test", (req, res) => {
+  console.log("Hello from server");
+});
+
+app.listen(3000, () => {
+  console.log("Server is successfully listening on port:3000");
+});
+
+
+----------------------------------------------------------
+
+SOME TRICKY NODEJS INTERVIEW QUESTIONS:
+
+const express = require("express");
+
+const app = express();
+
+// means "B" we are making b optional, so the routes can be "/abc" and "/ac" (because b is optional)
+// app.get("/ab?c", (req, res) => {
+//   res.send({ firstName: "Arsh", lastName: "Deep" });
+// });
+
+// b+ means , we can add as many b as we want, but a and c will come only once. eg: abbbbbbbbbbc, but abbbbbccc (it will not work because c will come only one time)
+// app.get("/ab+c", (req, res) => {
+//   res.send({ firstName: "Arsh", lastName: "Deep" });
+// });
+
+// This means when we write ab then we can write anything and last me cd hoga to it will work, (Basically it start will ab and end with cd)
+// Eg: ab12615215251625615cd and abcd will work fine as well
+// app.get("/ab*cd", (req, res) => {
+//   res.send({ firstName: "Arsh", lastName: "Deep" });
+// });
+
+// now agr bracket lga dete hai it means b and c are optional here, ad are mandatory
+// Eg: /abcd, ad
+// app.get("/a(bc)?d", (req, res) => {
+//   res.send({ firstName: "Arsh", lastName: "Deep" });
+// });
+
+
+// we can also pass the regex in this as well, means agr kahin par bhi a hoga to run hojayega
+app.get(/a/, (req, res) => {
+  res.send({ firstName: "Arsh", lastName: "Deep" });
+});
+app.listen(3000, () => {
+  console.log("Server is successfully listening on port:3000");
+});
+
+-------------------------------------------------------------------
+
+Note: If we want to send the data in url(query params)
+Eg:
+
+http://localhost:3000/a?userId=101&key="Arshdeep" (? marks means optional data pass kra hai in query params and and key bhi pass kri hai)
+
+
+How to recive the params data in the controller:
+
+app.get(/a/, (req, res) => {
+  console.log(req.query)
+  res.send({ firstName: "Arsh", lastName: "Deep" });
+});
+
+
+------------------------------------------------------------------
+
+
+HOW TO MAKE THE ROUTES DYNAMIC:
+
+Eg: suppose url is like: http://localhost:3000/user/1212123
+
+=> How to get the id in the controller:
+
+app.get("/user/:userid", (req, res) => {
+  console.log(req.params); // TO get the dynamic id
+  res.send({ message: "Successfully called" });
+});
+
+
+------
+
+Eg2: suppose url is like: http://localhost:3000/user/1212123/1212/0191
+
+app.get("/user/:userid/:name/:password", (req, res) => {
+  console.log(req.params); // TO get the dynamic id
+  res.send({ message: "Successfully called" });
+});
+
+
+------------------------------------- finish ----------------------------------------------

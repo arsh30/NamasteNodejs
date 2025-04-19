@@ -1,0 +1,69 @@
+Dev Tinder: 
+
+-> WATERFALL MODEL -> Software Development Life Cycle to Build the projects (1st Vimp Step: studied in software engineer subject)
+
+
+
+1. REQUIREMENTS -> (what is dev tinder, what features are going to build, how are you going to build, what are the different scenarios, what will be the audience and what will be the Tech Stack => ye sab PM (Project Manager krta hai))
+       - Project manager (PM) decides what are the Requirements in the project
+       - Project Manager (PM) work with designers , they will ask the designer to build the form and designer will give to PM and then PM will do some modification in that with the help of designer 
+
+       1.1) Design -> (Senior Engineer / Engineering Manager/ Tech leads - they will create a design document means what will be the architecture, understanding about the tech stack, monolith architecture use krege ya fir micro architecture, what are the microservices are going to build, how will they communicate, HLD and LLD Design creates)
+       1.2) Development 
+       1.3) Testing -> Software Development Engineer Team (SDET) -> They will test the application, 
+       1.4) Deployment -> (sometimes developer do this, sometimes DevOps team handle krti hai generally, They manages server)
+       1.5) Maintance -> (means following the same thing again from Requirements to Step 4)
+
+
+--------------------------------------------MONOLITH VS MICRO SERVICES ARCHITECTURE ------------------------------------------------------
+
+Q) what is monolith?
+S) means one big single project, it has everything (like backend, db connection, frontend code, authenticate, sendEmail, analytics). 
+   [means 1 single project (repository) me saare code daal dete hai ye ie frontend, backend, db connection, send email, authentication etc]
+
+
+Q) what is microservices architecture?
+S) means there are multiple small services (services/project/application are all same keyword), and har small services/project ki 1 small job hogi 
+
+    Eg: 1 microservice hai only for frontend, 1 microservice hai Backend, 1 microservice authentication ke liye hai, 
+        1 notification ke liye service hai, and 1 dashboard ke liye hai (means sabka code alag hai)
+        Note: In BigCompanies har service ke liye 1 seperate team hoti hai
+
+        and ye sare project/services ek dusre linked hoti hai through API'S
+        Now adays companies use microservice architecture
+
+
+Advantages and Disadvantages of monolith VS microservice ->
+
+1. Development Speed -> monolith dev speed is slower (because multiple people are working on same repo, code review will become slower, when we run the app, we have to compile the whole project, thats why microservice are fast, also ye parallely bhi chl skta hai like frontend team , and backend team dono ka code alag hai)
+2. Code repo -> monolith (there is single code repo for frontend backend etc), microservice (har ek ki code repo alag alag hai)
+3. scalability -> very tough to maintain in Big Project as single project is there, while in microservies (seperate project hai usko scale krna easy hai as compare to monolith)
+4. Deployment -> monolith (single time deploy kro puri app deploye hojayegi) and microservice me multiple times deploye krna pdhega, sometimes it is good or bad, drawback hai monolith me ki agr sirf 1 line ka change hai to puri app ko dubara deploy krna pdhega including backend frontend etc 
+5. Tech Stack -> monolith (we are restricted with Tech stack, means agr react me banare hai to pura react me hoga) but in microservice (agr admin dashboard create kiya hai to vo react me krliya and student dashboard jo hai vo angular me krliya)
+6. Infra cost -> monolith (lower) and higher in microservice
+7. Complexity -> monolith (tough as code is in single repo) and microservice(easy because small small services are there)
+8. Fault Association -> means 1 line me agr change hai to puri app break hojayegi in monolith, but microservice me aisa kuch nhi hoga, because different different service alag alag jagah deploye hai 
+9. Maintance -> (monolith it is tough because single project hai) and microservice (it is easier)
+10. Debugging -> tough in microservice because code alag alag hai and easy in monolith because 1 hi code base hai
+
+Overall Microservices is best.
+
+------------------------------------------------------------------------------------------------------
+
+Q) What Happen in NamasteDev.com ??
+S) 1. student Web (service written in NextJs)
+   2. Admin Web (service written in React)
+   3. Backend (written in Nodejs and communicate with student and admin)
+
+------------------------------------------------------------------------------------------------------
+
+
+Q) What Will Follow in Dev Tinder?
+
+1. we are using microservice 
+   1.1 frontend service (react)
+   1.2 backend service (Nodejs)
+
+These 2 will communicate via API'S
+
+-------------------------------- finish ----------------------------

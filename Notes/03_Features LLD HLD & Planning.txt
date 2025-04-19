@@ -1,0 +1,100 @@
+DEV TINDER (PLANNING [WHICH IS MOST IMPORTANT STEP])
+
+1. Requirements (decides the feature with Project manager): 
+    Q) what is devTinder?
+    s) devtinder is tinder like platform, specifically built for developers to make connections
+
+    Q) Features / Requirements
+    S) 1. Create an account(signup)
+    2. LOgin
+    3. Create/update profile
+    4. Feed Page - explore
+    5. send connection request 
+    6. see our matches 
+    7. see the request that we sent/recieved
+    8. update profile
+
+-> PM also work with designer to create mock UI design means button kidr hoga, login page kesa dikhega , feed page hai usme left swipe hoga ya right swipe hoga ya button 
+
+-> After getting Requirements, now Engineering manager/ Tech Lead read these Requirements and try to figure out to create a High level design (HLD) of the system means 
+    what what kind of microservice going to build, what kind of security practices will do, how user will authenticate, how will be the database be, what database will be used, 
+    how to design the database, how to design the apis , how microservices will connect each other (all kind of engineering stuff)
+
+    TECH PLANNING (In our project HIGH LEVEL DESINGING)
+    -> 2 microservices 
+            - Frontend (react)
+            - Backend (Nodejs, Mongodb)
+
+    -> Now backend teams comes into picture (SDE1, Sde2, and they start working on it)
+    -> but directly they wont start they do some LLD (low level design)
+
+    LLD STARTS -> 
+    -> IN Backend while backend team is creating the first important thing is do (LLD planning)
+        database, -> suppose your are building Mongodb, you have collection, documents. think about all the collections in the app, needed to store all the data of our applications
+        api design
+
+
+    -> NOTE: Mostly Try to focus on the DB Desing (HLD, LLD, most important to spent time on this)
+        In our project 
+
+        LLD of Database: (ye sab Requirements ko dekh kar banta hai)
+        1. User collection -> firstName, lastName, email, gender, age, password 
+
+        2. Connection Request Collections -> From UserId (kisni bhji)
+                                          -> To UserId (kisko bhji hai)
+                                          -> Status (pending, accepted, rejected , ignore, or block)
+
+                                          There can be more status like 
+                                          A ne send kri request B ko 
+
+                                          1. pending -> accepted or rejected 
+                                          2. A new B ko bhji request -> use ignore krdiya
+
+        Note: when we start a new project Try to make Enough Knowledge on HLD and LLD
+
+
+    -----------------------------
+
+    2, Api Design -> we are using REST API's
+
+    Q) what are REST Apis?
+    S) REST Apis are set of rules for building and interacting with web services, In other words rest api allows to different software to communicate 
+       with each other over internet. 
+
+    Eg: we have frontend application 
+           and we have backend application 
+           frontend me user ne email and password bhja to backend suppose /login api 
+           and login api Database Se communicate kregi and check kregi ki email and password hai ya nahi 
+
+
+    Types of Rest APis (HTTP methods)
+        1. GET - To get the data from server
+        2. POST - send the data to the server 
+        3. PUT - use to update the data 
+        4. PATCH - also use to update the data 
+        5. DELETE - To delete the record from the server
+
+
+    Q) what is the difference between put and patch ?
+    S) PUT -> used to update the entire resource or create a new resource of it does not exist 
+        Eg: when using PUT method, you are sending the full data to the server. if any field are missing in the request, they might be overwritten with default values or erased 
+
+       PATCH -> used to partially update a data 
+       Eg: When using PATCH, you only send the fields that need to be updated, leaving the other fields unchanged. 
+
+
+    Q) What apis we will need?  
+    S) /signup -> POST (CRUD Operations)
+       /login -> POST 
+       /profile -> GET 
+       /profile -> POST (to update the profile)
+       /profile -> PATCH 
+       /profile -> DELETE
+
+       /sendRequest -> POST -> (either we can show interest or ignore)
+       /reviewRequest -> POST -> (either we can accept or reject)
+       /requests -> GET (to get all request that i got)
+       /Connections -> GET (get all the connection that we are connected with)
+
+
+----------------------------- finish ------------------------------

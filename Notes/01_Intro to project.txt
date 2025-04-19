@@ -1,0 +1,6 @@
+PROJECT => dev Tinder (same like Tinder app)
+
+-> It is place for developer who hangout and make new friends (Kind of social media where they can sent chat reques and other people can accept and reject It)
+-> Tech STack -> Express, Mongodb, Nodejs, React
+
+------------------------ finish ------------

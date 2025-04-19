@@ -1,0 +1,321 @@
+const express = require("express");
+
+const app = express();
+
+// App.use can handle any type of request like GET, POST, DELETE, PUT, PATCH
+// and agr /user ye hi run krega even agr multiple apis hai vo /user/us tbhi, because /user ke baad agr kuch bhi aajaye toh /user wala hi run krega
+
+app.use("/user", (req, res) => {
+  // Callback function <=> route Handler
+  res.send("route handler 1");
+});
+
+app.listen(3000, () => {
+  console.log("Server is successfully listening on port:3000");
+});
+
+
+-----------------------
+
+Note: If we dont send any res from server, toh api call hoti jayegi infinite teams 
+and after sometime "timeout ka error" aajega and kuch return nahi hoga. 
+
+Eg:
+app.get("/user", (req, res) => {
+  // Callback function <=> route Handler
+  // res.send("route handler 1");
+});
+
+--------------------------
+
+
+Note2: One route, can multiple route Handler
+
+app.get(
+  "/user",
+  (req, res) => {
+    // Callback function <=> route Handler
+    console.log("Handling the route user!");
+    res.send("Response 1!");
+  },
+  (req, res) => {
+    console.log("Handling the router user 2");
+    res.send("Response 2");
+  }
+);
+
+->  In the above case we will get "Response 1" and 2nd request handler work nhi krega because 1st se hi response chla jayega
+
+-----------------
+
+Eg2: If res.send is not in first Route Handler? Toh second route handler me kese jayega??
+S) using next() -> Agr first route handler me res.send nahi hai toh second route handle me jayega,
+agr next() nahi hota and 1st route handler me response bhi nahi bhjte toh function execute hota jata
+
+app.get(
+  "/user",
+  (req, res, next) => {
+    console.log("Handling the route user!");
+    res.send("Response 1!");
+    next();
+  },
+  (req, res) => {
+    console.log("Handling the router user 2");
+    res.send("Response 2");
+  }
+);
+
+-> the next() method will call the 2nd request handler, and as we know nodejs is single threaded 
+toh 2nd callback par aayega but error aajega 
+
+---------------
+
+Eg3:
+
+app.get(
+  "/user",
+  (req, res, next) => {
+    console.log("Handling the route user!");
+    // res.send("Response 1!");
+    // next();
+  },
+  (req, res) => {
+    console.log("Handling the router user 2");
+    res.send("Response 2");
+  }
+);
+
+app.listen(3000, () => {
+  console.log("Server is successfully listening on port:3000");
+});
+
+-> agr 1st request handler se kuch response nhi bhj rahe and next() middleware ko bhi call nhi krware 
+toh request 1st request handler me aakr hi hang hojayegi and it will throw error "Request Timeout"
+
+-> Agr next() uncomment hoga tab  2nd request handler ka response aajaega
+
+---------
+
+Eg4: 
+
+app.get(
+  "/user",
+  (req, res, next) => {
+    console.log("Handling the route user!");
+    next();
+    res.send("Response 1!");
+  },
+  (req, res) => {
+    console.log("Handling the router user 2");
+    res.send("Response 2");
+  }
+);
+
+-> now the output will be Response2 because next call hogya pehle hi Response 1 se 
+but we got an error in the console because javascript is single threaded language. and still the code will execute. 
+
+-> agr next() hoga tabhi sirf next route handler execute hoga otherwise nahi.
+
+-> suppose agr last route handler par hum next() call krte, but uske baad koi route handler exist hi nahi krta ,
+then we will get an error that is "can not get/user" because vo expect krra tha next route handler but vo exist hi nahi krta.
+
+------------------------------------------------------------------------------------
+
+
+WAY 2 -> HOW CAN WE HANDLE MULTIPLE ROUTE HANDLER 
+
+app.get("/users", (req,res, next) => {
+  console.log("Hello route 1");
+  next(); 
+})
+
+app.get("/users", (req,res, next) => {
+  console.log("Hello route 2");
+  res.send("2nd Route Handler print!");
+})
+
+THIS IS SAME AS WE ARE DOING ABOVE IE: 
+
+app.get("/users", (req,res, next) => {
+  console.log("Hello route 1");
+  next(); 
+}, (req,res) => {
+   console.log("Hello route 2");
+   res.send("2nd Route Handler print!");
+})
+
+------------------------------------------------------------------------------
+
+
+MIDDLE WARES:
+
+These route Handler are called MiddleWares, it will go, middleware by middleware till it reaches the function which actually
+send the response to the client, That function (which send the response) is known as Request Handler, 
+
+so use, next() both are middlewares.
+
+
+Q) why we actually need the middlewares??
+S)
+
+Eg1: 
+
+app.get("/admin/getAllData", (req, res) => {
+  // suppose agr koi user hai vo api hit krega but agr vo verify hoga tabhi sirf hit kr payega
+  const token = 1212;
+  const isAdminAuthorized = token === 1212;
+
+  if (isAdminAuthorized) {
+    res.send("all data sent");
+  } else {
+    res.status(404).send("Unauthorized request");
+  }
+});
+
+app.get("/admin/deleteUser", (req, res) => {
+  // LOGIC TO CHECK IF THE USER IS AUTHENTICATED OR NOT
+  const token = 1212;
+  const isAdminAuthorized = token === 1212;
+  if (isAdminAuthorized) {
+    res.status(200).send("user deleted successfully");
+  } else {
+    res.status(404).send("Unauthorized request");
+  }
+});
+
+
+SO IN THE ABOVE EXAMPLE, CODE REPEAT HORA HAI, WE DONT WANT THAT,
+
+
+app.use("/admin", (req, res, next) => {
+  // suppose agr koi user hai vo api hit krega but agr vo verify hoga tabhi sirf hit kr payega
+  const token = 1212;
+  const isAdminAuthorized = token === 1212;
+
+  if (!isAdminAuthorized) {
+    res.status(404).send("Unauthorized request");
+  }
+  next();
+});
+
+app.get("/admin/getAllData", (req, res) => {
+  res.status(200).send("all data send");
+});
+
+app.get("/admin/deleteUser", (req, res) => {
+  res.status(200).send("user deleted successfully");
+});
+
+// Eg2:
+app.use("/user", (req, res, next) => {
+  const token = 1212;
+  const isAdminAuthorized = token === 1212;
+
+  if (!isAdminAuthorized) {
+    res.status(404).send("Unauthorized request");
+  }
+  next();
+});
+app.get("/user/userData", (req, res) => {
+  res.status(200).send("user deleted successfully");
+});
+
+
+NOTE: AGR REQUEST /admin par Ayegi koi bhi request (get, post, put, patch) to authenticate krega and then ,
+/getAllData wali api run krdega 
+
+-----------------------------------------------------------------------------------------
+
+BEST WAY TO WRITE THE ABOVE CODE: 
+
+1. Create middleWares folder in src: 
+
+middlewares.js ->
+const adminAuth = (req, res, next) => {
+  // suppose agr koi user hai vo api hit krega but agr vo verify hoga tabhi sirf hit kr payega
+  const token = 1212;
+  const isAdminAuthorized = token === 1212;
+
+  if (!isAdminAuthorized) {
+    res.status(404).send("Unauthorized request");
+  }
+  next();
+};
+
+const userAuth = (req, res, next) => {
+  const token = 1212;
+  const isAdminAuthorized = token === 1212;
+
+  if (!isAdminAuthorized) {
+    res.status(404).send("Unauthorized request");
+  }
+  next();
+};
+
+module.exports = {
+  adminAuth,
+  userAuth,
+};
+
+
+-----
+
+2. App.js ->
+const { adminAuth, userAuth } = require("./middlewares/authMiddleware");
+
+const app = express();
+
+app.use("/admin", adminAuth);
+app.use("/user", userAuth);
+
+app.get("/admin/getAllData", (req, res) => {
+  res.status(200).send("all data send");
+});
+
+app.get("/admin/deleteUser", (req, res) => {
+  res.status(200).send("user deleted successfully");
+});
+
+// Eg2:
+app.get("/user/userData", (req, res) => {
+  res.status(200).send("user deleted successfully");
+});
+
+app.listen(3000, () => {
+  console.log("Server is successfully listening on port:3000");
+});
+
+--------------------------------------------------- ERROR HANDLING ----------------------------------
+
+Note: Jabhi api likhte hai, to hmesha Try Catch me likhte hai. BEST WAY TO WRITE THIS USING TRY CATCH
+
+-> How to Handle Gracefully, means agr kahin par kuch break hogya toh pura random saa error aata hai 
+which is not good, like Cart is not defined,
+
+const app = express();
+
+app.get("/user", (req, res) => {
+  throw new Error("random error aaya");
+  res.status(200).send("user deleted successfully");
+});
+
+app.use("/", (err, req, res, next) => {
+  if (err) {
+    // Log your Error, Best is to write this in the end of api,
+    // agr starting me lga dete toh vo catch hi nahi hota because error niche aaya hai
+    res.status(500).send("Something went wrong");
+  }
+});
+
+app.listen(3000, () => {
+  console.log("Server is successfully listening on port:3000");
+});
+
+
+Note: 
+1. Always write Try Catch, 
+2. If someone has not written the try catch toh sabse last me jaakr ye app.use error handler work krega. 
+
+------------------------------------------------- finish ----------------------------------
+
+

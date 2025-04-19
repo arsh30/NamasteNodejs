@@ -1,0 +1,155 @@
+1. PASS THE DYNAMIC DATA IN THE API THROUGH POSTMAN 
+
+Q) what is the difference between JS object and JSON 
+S) JS object is a liv in memory structure used directly in code.
+   JSON: it is text-based data format, used to represent data. often used for data transfer (Eg api, local storage)
+
+Note: 
+JS OBJECT -> JSON conversion : (Json.stringify(obj));
+JSON -> JS object: (JSON.parse(jsonString));
+
+
+app.post("/signup", async (req, res) => {
+  try {
+    // whenever anyone store the data , it will come in request.body
+    //console.log(req.body); // but we will not able to read this, because body me text aa raha hai, so to read this, we need middleware that conver JSON to JS object ie express.json()
+
+    const user = new User(req.body);
+
+    // Now we have to save this user in the db,
+    // note: mostly mongoose methods return promise
+    await user.save();
+    res.status(200).send("user added successfully");
+  } catch (error) {
+    res.status(400).send("Error saving the user: " + error.message);
+  }
+});
+
+
+----------------------------------------------------------------------
+
+
+TO GET THE DATA FROM THE DB. (IN Mongoose doc, we can see model tabel)
+
+const mongoose = require("mongoose");
+const userSchema = new mongoose.Schema({
+  firstName: {
+    type: String,
+  },
+  lastName: {
+    type: String,
+  },
+  emailId: {
+    type: String,
+  },
+  password: {
+    type: String,
+  },
+  age: {
+    type: String,
+  },
+  gender: {
+    type: String,
+  },
+});
+
+// Now we create a mongooseModel
+const User = mongoose.model("User", userSchema);
+module.exports = User; // jisme store krre hai always should be in capital letter, we will create instance of this model
+
+*****************************************************
+
+2. app.js -> (All apis)
+
+const express = require("express");
+const connectDB = require("./config/database");
+const User = require("./models/user");
+const app = express();
+
+app.use(express.json());
+
+app.post("/signup", async (req, res) => {
+  try {
+    //console.log(req.body); // but we will not able to read this, because body me text aa raha hai, so to read this, we need middleware that conver JSON to JS object ie express.json()
+    const user = new User(req.body);
+    await user.save();
+    res.status(200).send("user added successfully");
+  } catch (error) {
+    res.status(400).send("Error saving the user: " + error.message);
+  }
+});
+
+// Get user by email
+app.get("/user", async (req, res) => {
+  const userEmail = req.body?.emailId;
+  // So all the code should be in try catch
+  try {
+    // const user = await User.find({ emailId: userEmail }); //  Note: find basically gives you all the Entries which have the same Email
+    // if (user.length < 1) {
+    //   res.status(404).send("user not found");
+    // } else {
+    //   res.status(200).send(user); // we sent the details to the client
+    // }
+
+    // If we want to get the single Entry, Jo first wala hoga (oldest)
+    const user = await User.findOne({ emailId: userEmail });
+    if (!user) {
+      res.status(400).send("user not found");
+    }
+    res.status(200).send(user);
+  } catch (error) {
+    res.status(400).send("Something went wrong " + error.message);
+  }
+});
+
+// Feed Api -> GET/feed - get all the user from the database
+app.get("/feed", async (req, res) => {
+  try {
+    const users = await User.find({}); // whenever we give empty {}, it gives all the users
+    res.status(200).send(users); // send all users to client
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: "Something went wrong", message: error.message });
+  }
+});
+
+app.delete("/user", async (req, res) => {
+  const userId = req.body?.userId;
+  try {
+    // const user = await User.findByIdAndDelete({_id: userId});
+    const user = await User.findByIdAndDelete(userId); // it basically return the document that we have deleted
+    res.status(201).send("user deleted successfully");
+  } catch (error) {
+    res
+      .status(401)
+      .json({ error: "Something went wrong", message: error.message });
+  }
+});
+
+app.patch("/user", async (req, res) => {
+  const userId = req.body.userId;
+  const data = req.body;
+
+  try {
+    const user = await User.findByIdAndUpdate({ _id: userId }, data); // jo jo field hmne schema me bnai hai and vo vo agr pass krre hai toh vo update hojayegi
+    console.log(user);
+    res.status(201).send("user updated successfully");
+  } catch (error) {
+    res.status(400).send("Something went wrong");
+  }
+});
+
+connectDB()
+  .then(() => {
+    console.log("connection is successfully established");
+    app.listen(3000, () => {
+      console.log("Server is successfully listening on port:3000");
+    });
+  })
+  .catch((error) => {
+    console.log("Connection not established");
+  });
+
+
+------------------------------- finish ---------------------

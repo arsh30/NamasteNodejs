@@ -1,0 +1,286 @@
+------ AUTHENTICATION , JWT, COOKIES: -------
+
+app.post("/login", async (req, res) => {
+  try {
+    const { emailId, password } = req.body;
+    if (!validators.isEmail(emailId)) {
+      throw new Error("EmailId is wrong");
+    }
+    const user = await User.findOne({ emailId: emailId });
+    if (!user) {
+      throw new Error("Invalid credentials");
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (isPasswordValid) {
+      // Create a JWT Token - (npm i jsonwebtoken)
+      const token = await jwt.sign({ _id: user._id }, "DEV@TINDER876192811");
+      // console.log(token); // means jo token aayega usme userId hidden rhegi,
+
+      res.cookie("token", token);
+      res.status(201).send("login successful!!!");
+    } else {
+      res.status(401).send("Invalid credentials");
+    }
+  } catch (error) {
+    res.status(401).send("Error: " + error.message);
+  }
+});
+
+app.get("/profile", async (req, res) => {
+  try {
+    const cookies = req.cookies;
+
+    const { token } = cookies;
+    // console.log(token);
+
+    // validate the cookie token
+    const decodedMsg = await jwt.verify(token, "DEV@TINDER876192811");
+    // console.log(decodedMsg); // it gives the Id
+
+    const { _id } = decodedMsg; // this _id, is basically the id of the user
+    console.log("user id is: ", _id);
+    //1.  so 1 bar jab signup krliya to hum password ko hash krke store krte hai db me which is impossible to decrypt this
+    //2. jab login, kiya to sbse pehle db me dekha ki vo user exist krta hai to get kiya,
+    // if yes, and bcytp.compare se password compare kiya and agr password same aaya to 1 new jwt token create kiya using jwt.sign
+    // and usko res.cookie me set krwa diya , so ab jabhi koi request aayegi, vo token usme hoga, basically uski id hmne store krli us token me
+    // id store hai, so jabhi koi api hit hogi to hume uss user ki details mil jayegi 
+    // Jabhi koi user login hoga, hmesha uske liye different hogi
+
+    const user = await User.findById(_id);
+
+    if (!user) {
+      throw new Error("user not found");
+    }
+
+    res.status(201).send(user);
+  } catch (error) {
+    console.log("Error: " + error.message);
+  }
+});
+
+------------- NOW HOW TO ADD THE AUTHENTICATION IN EVERY API (USING MIDDLEWARE) -------------------------
+
+Why do we need to middleware?
+S) because i want to secure all the secure (means all the api will work after login, only signup and login are the apis which 
+dont need authentication) 
+
+const jwt = require("jsonwebtoken");
+const User = require("../models/user");
+const userAuth = async (req, res, next) => {
+  try {
+    // READ THE TOKEN FROM REQ.COOKIES
+    const { token } = req.cookies;
+    if (!token) {
+      throw new Error("Invalid token");
+    }
+
+    // validate the token
+    const decodedMsg = await jwt.verify(token, "DEV@TINDER876192811");
+    const { _id } = decodedMsg;
+
+    // find the user
+    const user = await User.findById(_id);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Attach the current user to the req
+    req.user = user;
+    next();
+  } catch (error) {
+    res.status(400).send("Error: " + error.message);
+  }
+};
+
+module.exports = {
+  userAuth,
+};
+
+
+------
+
+2. MAIN COMPLETE API's  ->
+
+const express = require("express");
+const connectDB = require("./config/database");
+const User = require("./models/user");
+const bcrypt = require("bcrypt");
+const { validateSignUpData } = require("./utils/validation");
+const app = express();
+const validators = require("validator");
+
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
+const { userAuth } = require("./middlewares/authMiddleware");
+
+app.use(express.json());
+app.use(cookieParser());
+
+app.post("/signup", async (req, res) => {
+  try {
+    //console.log(req.body); // but we will not able to read this, because body me text aa raha hai, so to read this, we need middleware that conver JSON to JS object ie express.json()
+
+    //1. data validate
+    validateSignUpData(req);
+
+    const { firstName, lastName, emailId, password } = req.body;
+    const passwordHash = await bcrypt.hash(password, 10); // 10 is basically a salt, jitne jyda round honge utna tough hoga password
+    // - make sure agr 1 bar password hash hogya to its almost impossible decrypt the password again
+
+    // 2. Encrypt password
+    const user = new User({
+      firstName,
+      lastName,
+      emailId,
+      password: passwordHash,
+    });
+
+    await user.save();
+    res.status(200).send("user added successfully");
+  } catch (error) {
+    res.status(400).send("Error: " + error.message);
+  }
+});
+
+app.post("/login", async (req, res) => {
+  try {
+    const { emailId, password } = req.body;
+    if (!validators.isEmail(emailId)) {
+      throw new Error("EmailId is wrong");
+    }
+    const user = await User.findOne({ emailId: emailId });
+    if (!user) {
+      throw new Error("Invalid credentials");
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (isPasswordValid) {
+      // Create a JWT Token - (npm i jsonwebtoken)
+      const token = await jwt.sign({ _id: user._id }, "DEV@TINDER876192811", {
+        expiresIn: "7d",
+      });
+      // console.log(token); // means jo token aayega usme userId hidden rhegi,
+
+      res.cookie("token", token, { expires: new Date(Date.now() + 8 *  36000000) });
+      // benefit of expiring the cookie, to make the application more secure, if some one forgot to 
+      // logout from the device it automatically logout
+      res.status(201).send("login successful!!!");
+    } else {
+      res.status(401).send("Invalid credentials");
+    }
+  } catch (error) {
+    res.status(401).send("Error: " + error.message);
+  }
+});
+
+app.get("/profile", userAuth, async (req, res) => {
+  try {
+    //1.  so 1 bar jab signup krliya to hum password ko hash krke store krte hai db me which is impossible to decrypt this
+    //2. jab login, kiya to sbse pehle db me dekha ki vo user exist krta hai to get kiya,
+    // if yes, and bcytp.compare se password compare kiya and agr password same aaya to 1 new jwt token create kiya using jwt.sign
+    // and usko res.cookie me set krwa diya , so ab jabhi koi request aayegi, vo token usme hoga, basically uski id hmne store krli us token me
+    // id store hai, so jabhi koi api hit hogi to hume uss user ki details mil jayegi
+    // Jabhi koi user login hoga, hmesha uske liye different hogi
+
+    const user = req.user;
+    res.status(201).send(user);
+  } catch (error) {
+    console.log("Error: " + error.message);
+  }
+});
+
+connectDB()
+  .then(() => {
+    console.log("connection is successfully established");
+    app.listen(3000, () => {
+      console.log("Server is successfully listening on port:3000");
+    });
+  })
+  .catch((error) => {
+    console.log("Connection not established");
+  });
+
+-------------------  MONGOOSE SCHEMA METHODS --------------------
+
+- Basically we have created the user Schema , this userSchema, basically defines the user in the db 
+- so we can attach few methods on to this schema which is applicable to all user, 
+- basically these methods are helper methods which closely related to users
+
+
+=> when we are logining the user, we are creating the jwt token, and we are passing the ID into the jwt token, 
+  so this method is very closely related to user, every user have different jwt token, 
+  so we are just offload such thing to user schema, 
+
+=> so instead of signing the token from login api, we will get the token from user schema method 
+
+=> we can add the handler method to offload things to different functions 
+
+
+Eg: 
+login Api ->
+
+app.post("/login", async (req, res) => {
+  try {
+    const { emailId, password } = req.body;
+    if (!validators.isEmail(emailId)) {
+      throw new Error("EmailId is wrong");
+    }
+    const user = await User.findOne({ emailId: emailId });
+    if (!user) {
+      throw new Error("Invalid credentials");
+    }
+
+    const isPasswordValid = user.validatePassword(password);
+    if (isPasswordValid) {
+      // Create a JWT Token - (npm i jsonwebtoken)
+      const token = await user.getJWT();
+
+      res.cookie("token", token, {
+        expires: new Date(Date.now() + 8 * 36000000),
+      });
+      // benefit of expiring the cookie, to make the application more secure, if some one forgot to
+      // logout from the device it automatically logout
+      res.status(201).send("login successful!!!");
+    } else {
+      res.status(401).send("Invalid credentials");
+    }
+  } catch (error) {
+    res.status(401).send("Error: " + error.message);
+  }
+});
+
+----
+
+2. SCHEMA METHOD THAT WE ARE ATTACHING WITH USER: 
+
+
+
+userSchema.methods.getJWT = async function () {
+  // Note: always use normal function, because in arrow function this method will not work
+  // WE ARE ATTACHING THIS GETJWT METHOD WITH EVERY USER IN DB WHOSOEVER LOGIN
+  // THIS MAKES OUR CODE MORE CLEANER, TESTABLE, AND GOOD WAY
+
+  const user = this; // this (basically jo user create hua hai db me uski ID lera hai, (OVERALL INSTANCE JO CREATE HUA HAI USKI ID LERA HAI))
+  const token = await jwt.sign({ _id: user._id }, "DEV@TINDER876192811", {
+    expiresIn: "7d",
+  });
+  return token;
+};
+
+userSchema.methods.validatePassword = async function (passwordEnterByUser) {
+  const user = this;
+  const hashPassword = user.password;
+  const isPasswordValid = await bcrypt.compare(
+    passwordEnterByUser,
+    hashPassword
+  );
+  return isPasswordValid;
+};
+
+// NOTE: These schema method are very closely to user model,eg: in jwt sign=we are using userId and similarly for validatePassword 
+// which is specific to the user
+
+
+---------------------- FINISH --------------------
+
