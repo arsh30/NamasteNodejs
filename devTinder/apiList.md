@@ -8,13 +8,13 @@
 ### ProfileRouter
 - get /profile/view
 - patch /profile/edit (it will not edit the email and password)
-- patch /profile/password
+- patch /profile/password // forgot password api
 
 
 ### ConnectionRequestRouter
-STATUS WE HAVE (ignore (left swipe), interested (right swipe), accepted, rejected)
-- POST /request/send/interested/:userId (These two are for sending the connection request)
-- POST /request/send/ignored/:userId 
+STATUS WE HAVE (ignored (left swipe), interested (right swipe), accepted, rejected)
+- POST /request/send/:status/:userId (These two are for sending the connection request)
+
 
 - POST /request/review/accepted/:requestId (These two are for accepted or rejected it)
 - POST /request/review/rejected/:requestId
@@ -24,3 +24,5 @@ STATUS WE HAVE (ignore (left swipe), interested (right swipe), accepted, rejecte
 - GET /user/connections (like matches for all the connections)
 - GET /user/requests 
 - GET /user/feeds - GETs you the profile of all other users 
+
+

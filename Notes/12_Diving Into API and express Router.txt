@@ -155,5 +155,37 @@ authRouter.post("/logout", async (req, res) => {
 
 ****************************************************************************************
 
+EDIT PROFILE API ->
 
+profileRouter.patch("/profile/edit", userAuth, async (req, res) => {
+  try {
+    if (!validateEditProfileData(req)) {
+      // Do this validation every time when ever the we put any data inside the database
+      throw new Error("Invalid Edit Request!!!!");
+    }
+
+    const loggedInUser = req.user;
+
+    Object.keys(req.body).forEach((key) => {
+      return (loggedInUser[key] = req.body[key]);
+    });
+
+    await loggedInUser.save();
+
+    res.status(201).json({
+      message: `${loggedInUser.firstName}, your profile updated successfully`,
+      data: loggedInUser,
+    });
+  } catch (error) {
+    res.status(400).send("Error: " + error.message);
+  }
+});
+
+****************************************************************************************
+
+FORGOT PASSWORD API 
+
+
+
+--------------------- HOMEWORK ----------------
 

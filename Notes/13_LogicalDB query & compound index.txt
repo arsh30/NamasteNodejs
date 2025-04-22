@@ -1,0 +1,218 @@
+
+HOW TO PUT THE INDEX IN THE DATABASE (VERY IMPORTANT CONCEPT)
+
+EG: just imagine, 1000 people are using the app, and every person is sending the 100 connection request, so our connectionRequest 
+collection will have 1000 * 100 = 1lac record
+so as my collection will grow, the findOne query will become expensive means , it will become very slow. 
+
+so when you scale the database, it becomes very tough for db to handle all these things, 
+so for that we need index in database, which makes api faster
+
+
+Q) what is the role of index?
+S) suppose if you have 1 million people, 100 people are there whose name are virat (firstName)
+and we want to find with the username, means we have to use 'find' query, then db will take so much time 
+
+but if we will keep index in the database, on the firstName, the query will become very fast 
+Eg: when we are searching in db like this, User.find({firstName: "Akshay"}), 
+if the Index is their at the firstName, then the query will become very fast 
+but if it is not there then the query will become very slow, as the db grows. 
+
+
+-> so in our case, we will keep the index on emailId, because a lot of times we want to find the user.emailId 
+-> In Mongodb, if we made a field "Unique" (emailId) , then Mongodb automatically creates the index for ous. 
+    or if we want to make this in firstName , In schema we have to add like this 
+      {
+        firstName: {
+        type: String,
+        required: true,
+        minLength: 4,
+        maxLength: 50,
+        index:true
+        },
+    }
+
+
+-> In connectionRequest also, we are doing, connectionRequest.findOne({
+    $or: [
+        {fromUserId, toUserId},
+        {fromUserId: toUserId, toUserId: fromUserId}
+    ]
+})
+
+this query will become very expensive, if the database contains millions of data, 
+so when we are quering together eg (fromUserId, toUserId), so I need to index them both, 
+so Over Here we need to use Compound Index (means jab 2 ke base par lgana hai eg: 
+find krna hai with firstName and lastName, then we need to add this on the compound Index)
+
+Eg: user.find({firsName:"akshay", lastName:"saini"});
+userSchema.index(firstName: 1, lastName: 1); //  Now ab index add krdiya hai in schema, then query will become fast 
+jab search krege, 
+
+Note: 
+- jab +1 krege to ascending order me lega, and -1 jab krege to descending order me krege 
+- and sari field ko hme index nahi bnana chaiye. 
+
+--------------- overall -----
+
+1. what is an index in mongodb ?
+s. It is like the index in the book, it help you to find the information faster 
+without index, mongodb scan every document in collection to find a match, this is called collection, it is slow when there are multiple documents 
+
+with an index, mongodb directly jump to the document that match the query 
+
+
+Eg:
+{
+  "_id": ObjectId("..."),
+  "name": "Alice",
+  "age": 25,
+  "email": "alice@example.com"
+}
+
+now if run this db.users.find({ name: "Alice" })
+without index on name, it will check every document 
+
+- to make this faster, you create an index 
+db.users.createIndex({ name: 1 })  // 1 means ascending order
+
+
+2. CompoundIndex: 
+A compound index includes multiple fields. 
+
+Example: For example, suppose you often query users by both name and age:
+db.users.find({ name: "Alice", age: 25 })
+- db.users.createIndex({ name: 1, age: -1 }) 
+
+
+
+3. MongoDb Operators: 
+
+$and
+$or 
+$not 
+$nor 
+
+
+4. Advantage and Disadvantage of using index: 
+
+Advantage:
+1. Faster Queries (Especially with large documents)
+2. Efficient sorting (sort is quicker if the sort field is indexed)
+3. Better performance for range queries eg (age > 25, price < 100) 
+
+Disadvantage:
+1. slow writes (insert, update, delete) - mongodb has to update index every time you write the data. 
+    = means more index = more over head during writes 
+
+2. uses extra memory and storage
+
+
+5. Should You Create an Index on Every Collection?
+S. No. 
+✅ Index fields that are frequently used in queries, like filters or sorting.
+✅ Index fields used in lookup, join, or aggregation pipelines.
+❌ Don’t index fields that aren’t used in queries or are rarely filtered.
+
+
+---------------------- CURRENT CODE ---------------------------
+
+const mongoose = require("mongoose");
+
+const connectionRequestSchema = new mongoose.Schema(
+  {
+    fromUserId: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+    },
+    toUserId: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+    },
+    status: {
+      type: String,
+      required: true,
+      enum: {
+        values: ["ignored", "interested", "accepted", "rejected"],
+        message: `{VALUE} is incorrect status Type`,
+      },
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+// Adding the Index in this
+// Eg: ConnectionRequest.find({fromUserId:12u1u29921, toUserId: uu1921923878273823})
+connectionRequestSchema.index({ fromUserId: 1, toUserId: 1 }); // Added compound Index (means 2 cheezo par lagana ho)
+
+connectionRequestSchema.pre("save", function (next) {
+  const connectionRequest = this;
+
+  // check if the fromUserId and sendUserid is same
+  if (connectionRequest.fromUserId.equals(connectionRequest.toUserId)) {
+    throw new Error("can not send connection request to yourself");
+  }
+  next();
+});
+const ConnectionRequestModel = new mongoose.model(
+  "ConnectionRequest",
+  connectionRequestSchema
+);
+
+module.exports = ConnectionRequestModel;
+
+
+2. API -> 
+
+requestRouter.post(
+  "/request/send/:status/:toUserId",
+  userAuth,
+  async (req, res) => {
+    try {
+      const fromUserId = req.user._id;
+      const toUserId = req.params.toUserId;
+      const status = req.params.status;
+
+      const allowedStatus = ["ignored", "interested"];
+      if (!allowedStatus.includes(status)) {
+        throw new Error("Invalid status Type");
+      }
+
+      //  2. jisko bhjni hai vo hmare db me hai bhi
+      const toUser = await User.findById(toUserId);
+      if (!toUser) {
+        throw new Error("User not found");
+      }
+      
+      const existingRequests = await ConnectionRequest.findOne({
+        $or: [
+          { fromUserId, toUserId },
+          { fromUserId: toUserId, toUserId: fromUserId },
+        ],
+      });
+
+      if (existingRequests) {
+        throw new Error("Requests already Exists");
+      }
+
+      const connectionRequest = new ConnectionRequest({
+        fromUserId,
+        toUserId,
+        status,
+      });
+
+      const data = await connectionRequest.save();
+      console.log("data", data);
+
+      res.status(200).json({
+        message: `${req.user.firstName} is ${status} in : ${toUser.firstName}`,
+      });
+    } catch (error) {
+      res.status(400).send("Error: " + error.message);
+    }
+  }
+);
+
+***************** finish ******************
