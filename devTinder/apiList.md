@@ -14,10 +14,7 @@
 ### ConnectionRequestRouter
 STATUS WE HAVE (ignored (left swipe), interested (right swipe), accepted, rejected)
 - POST /request/send/:status/:userId (These two are for sending the connection request)
-
-
-- POST /request/review/accepted/:requestId (These two are for accepted or rejected it)
-- POST /request/review/rejected/:requestId
+- POST /request/review/:status/:requestId (These two are for accepted or rejected it)
 
 
 ### userRouter
