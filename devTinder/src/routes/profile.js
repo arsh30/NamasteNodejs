@@ -17,9 +17,9 @@ profileRouter.get("/profile/view", userAuth, async (req, res) => {
     // Jabhi koi user login hoga, hmesha uske liye different hogi
 
     const user = req.user;
-    res.status(201).send(user);
+    res.status(201).json(user);
   } catch (error) {
-    console.log("Error: " + error.message);
+    res.status(400).json({ message: "Error: " + error.message });
   }
 });
 
@@ -43,7 +43,7 @@ profileRouter.patch("/profile/edit", userAuth, async (req, res) => {
       data: loggedInUser,
     });
   } catch (error) {
-    res.status(400).send("Error: " + error.message);
+    res.status(400).json({ message: "Error: " + error.message });
   }
 });
 

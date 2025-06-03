@@ -1,0 +1,125 @@
+
+
+-> HOW TO SAVE THE DATA IN THE REDUX STORE 
+- we will use Redux Toolkit
+- go to redux.org  -> get started 
+- npm install @reduxjs/toolkit react-redux
+
+
+1. CREATE STORE -> 
+
+create folder -> utils -> create file (appStore.js)
+import { configureStore } from "@reduxjs/toolkit";
+
+const appStore = configureStore({
+  reducer: {},
+});
+
+export default appStore;
+
+-----
+
+2. NOW WE HAVE TO PROVIDE THIS STORE TO APPLICATION 
+
+- go to the root file ie main.jsx or app.jsx 
+- wrap that with the Provider
+
+const App = () => {
+  return (
+    <Provider store={appStore}> // NOW AB HMARI APPLICATION ME PURE STORE KA ACCESS HOGA (WE CREATE THIS CENTRAL STORE)
+      <BrowserRouter basename="/">
+        <Routes>
+          <Route path="/" element={<Body />}>
+            <Route path="/login" element={<Login />} />
+            <Route path="/profile" element={<Profile />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </Provider>
+  );
+};
+
+-------
+
+3. NOW OUR STORE CONSIST OF SOME SLICES
+
+-> create file ie "userSlice.js" in utils. 
+import { createSlice } from "@reduxjs/toolkit";
+
+const userSlice = createSlice({
+  name: "user",
+  initialState: null,
+  reducers: {
+    addUser: (state, action) => {
+      return action.payload;
+    },
+    removeUser: (state, action) => {
+      return null;
+    },
+  },
+});
+export const { addUser, removeUser } = userSlice.actions;
+export default userSlice.reducer;
+
+----------
+
+4. NOW THE LAST STEP IS ADD THIS SLICE TO THE appStore: 
+
+const appStore = configureStore({
+  reducer: {
+    user: useReducer,
+  },
+});
+
+-------------------------------------------------------------
+
+NOW HOW CAN WE ADD THE DATA INTO THE REDUX STORE: 
+
+1. we need a hook that useDispatch - this will dispatch the action 
+
+  const dispatch = useDispatch(); // This hook will dispatch the action
+
+  const handleLogin = async () => {
+    try {
+      const res = await axios.post("http://localhost:3000/login", {
+        emailId,
+        password,
+      });
+      console.log(res.data);
+      dispatch(addUser(res.data)); // we are dispatch the action to add the data into store 
+    } catch (error) {
+      console.log("error: ", error);
+    }
+  };
+
+---------------------------------------------------------------
+
+HOW TO READ THE DATA FROM THE STORE: 
+
+const Navbar = () => {
+  const user = useSelector((store) => store.user); // subscribe the store, it will get the user from the store.
+
+  return (
+    <div className="navbar bg-base-300 shadow-sm">
+      <div className="flex-1">
+        <a className="btn btn-ghost text-xl">🧑‍💻 DevTinder </a>
+      </div>
+      {user ? (
+        <div className="flex gap-2 items-center">
+          <ThemeToggle />
+          <div className="form-control"> Welcome, {user.firstName}</div>
+          <div className="dropdown dropdown-end mx-5">
+            <div
+              tabIndex={0}
+              role="button"
+              className="btn btn-ghost btn-circle avatar"
+            >
+              <div className="w-10 rounded-full">
+                <img alt="user photo" src={user.photoUrl} />
+              </div>
+            </div>
+      )}
+  )
+}
+
+------------ finish -------

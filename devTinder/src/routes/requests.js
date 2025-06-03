@@ -47,7 +47,7 @@ requestRouter.post(
         message: `${req.user.firstName} is ${status} in : ${toUser.firstName}`,
       });
     } catch (error) {
-      res.status(400).send("Error: " + error.message);
+      res.status(400).json({ message: "Error: " + error.message });
     }
   }
 );
@@ -96,7 +96,7 @@ requestRouter.post(
 
       */
     } catch (error) {
-      res.status(400).send("Error: " + error.message);
+      res.status(400).json({ message: "Error: " + error.message });
     }
   }
 );

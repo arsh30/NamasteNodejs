@@ -1,0 +1,32 @@
+-> npm create vite@latest devTinder-web -- --template react
+-> cd devTinder-web -> npm install 
+-> npm run dev 
+
+------------
+
+1. we will use in this tailwind css and setup in the project (vite project)
+2. component library -> daisyui (it is compatible with tailwind) and 
+    make sure we need Node.js and Tailwind CSS installed before installing this.
+
+- go to daisyui.com -> how to use (click on that) -> 
+    npm i -D daisyui@latest
+
+
+Note:
+jo nodejs me hum require krke import kr rahe the ie -> common JS 
+but in react, we are using -> es module
+
+----------
+
+FOR ROUTING -> npm i react-router-dom
+
+Note: Generally the routing setup at root level 
+
+Body
+    Navbar
+    Route=/ => Feed 
+    Route=/login => Login 
+    Route=/connections => Connections 
+    Route=/profile => Profile 
+
+----------- finish ------------

@@ -1,0 +1,79 @@
+Currently what is happening -> 
+- when we refresh the page, then we are logout 
+- i have a token store inside the  cookie but still we are logout. 
+- Note: in redux by default, data does not persist state across page refresh - it resets to initial state when the page reloads 
+- but the token is still present in the cookie , the user is logged out, only if the cookie is expire. 
+- so how do we stay logged In, even after we refresh the page. 
+
+
+-> We will go to the root of our application that is app 
+- so everything is happening inside the body .
+
+ROOT LEVEL (BECAUSE SBSE PEHLE BODY COMPONENT LOAD HOTA HAI AND AGR YE API KE BINA CHECK KRNA HOTA TOH 
+COOKIES ME SE DEKHTE HAI KI TOKEN HAI YA NAHI YA FIR LOCAL STORAGE ME, AGR NAHI HOTA TOH NAVIGATE HI NAHI KRTE)
+
+const Body = () => {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const user = useSelector((store) => store.user);
+
+  const fetchUser = async () => {
+    try {
+      const res = await axios.get(BASE_URL + "/profile/view");
+      dispatch(addUser(res.data));
+    } catch (error) {
+      if (error.status === 401) {
+        navigate("/login");
+      }
+      console.log(error.message);
+    }
+  };
+
+  useEffect(() => {
+    if (!user) {
+      fetchUser();
+    }
+  }, []);
+
+  return (
+    <>
+      <Navbar />
+      <div className="min-h-screen flex flex-col items-center">
+        <div className="flex-col items-center flex-1">
+          <Outlet />
+        </div>
+      </div>
+      <Footer />
+    </>
+  );
+};
+
+---------
+
+2. Logout Feature: 
+
+const Navbar = () => {
+  const user = useSelector((store) => store.user); // subscribe the store
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const handleLogout = async () => {
+    try {
+      await axios.post(BASE_URL + "/logout", {}, { withCredentials: true });
+      dispatch(removeUser());
+      return navigate("/login");
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
+
+  return (
+        <li>
+            <Link onClick={() => handleLogout()}>Logout</Link>
+        </li>
+    )
+  };
+
+-------------
+
+3. Feed Feature

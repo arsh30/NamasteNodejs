@@ -5,7 +5,7 @@ const userAuth = async (req, res, next) => {
     // READ THE TOKEN FROM REQ.COOKIES
     const { token } = req.cookies;
     if (!token) {
-      throw new Error("Invalid token");
+      return res.status(401).send("Please Login!");
     }
 
     // validate the token

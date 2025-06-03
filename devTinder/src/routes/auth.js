@@ -24,10 +24,19 @@ authRouter.post("/signup", async (req, res) => {
       password: passwordHash,
     });
 
-    await user.save();
-    res.status(200).send("user added successfully");
+    const savedUser = await user.save();
+    // We want ki jab user login kre to automatically LoggedIn rahe so for this,
+    //  token bhi hum dubara send krege
+    const token = await savedUser.getJWT();
+
+    res.cookie("token", token, {
+      expires: new Date(Date.now() + 8 * 36000000),
+    });
+    res
+      .status(200)
+      .json({ data: savedUser, message: "user added successfully" });
   } catch (error) {
-    res.status(400).send("Error: " + error.message);
+    res.status(400).json({ message: "Error: " + error.message });
   }
 });
 
@@ -52,12 +61,12 @@ authRouter.post("/login", async (req, res) => {
       });
       // benefit of expiring the cookie, to make the application more secure, if some one forgot to
       // logout from the device it automatically logout
-      res.status(201).send("login successful!!!");
+      res.status(201).json(user);
     } else {
-      res.status(401).send("Invalid credentials");
+      res.status(401).json({ message: "Invalid credentials" });
     }
   } catch (error) {
-    res.status(401).send("Error: " + error.message);
+    res.status(401).json({ message: "Error: " + error.message });
   }
 });
 
